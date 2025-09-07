@@ -8,6 +8,7 @@ export default function App() {
   const [editIndex, setEditIndex] = useState(null);
   const [editValue, setEditValue] = useState("");
 
+  // Add new task
   const handleAddTask = () => {
     if (addTask.trim() === "") {
       return;
@@ -16,28 +17,40 @@ export default function App() {
       setAddTask("");
     } else {
       alert(`Task Added: ${addTask}`);
-      setTasks([...tasks, addTask]);
+      setTasks([...tasks, { text: addTask, done: false }]);
       setAddTask("");
     }
   };
+
+  // Delete task
   const handleDeleteTask = (index) => {
     const newTasks = tasks.filter((_, i) => i !== index);
     setTasks(newTasks);
     alert("Task Deleted");
   };
+
+  // Edit task
   const handleEditTask = (index) => {
     setEditIndex(index);
-    setEditValue(tasks[index]);
+    setEditValue(tasks[index].text);
   };
 
+  // Save edited task
   const handleSaveTask = (index) => {
     if (editValue.trim() !== "") {
       const updatedTasks = [...tasks];
-      updatedTasks[index] = editValue;
+      updatedTasks[index].text = editValue;
       setTasks(updatedTasks);
     }
     setEditIndex(null);
     setEditValue("");
+  };
+
+  // Toggle done/undo
+  const handleToggleDone = (index) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[index].done = !updatedTasks[index].done;
+    setTasks(updatedTasks);
   };
 
   return (
@@ -45,6 +58,7 @@ export default function App() {
       className={`flex flex-col items-center justify-center min-h-screen transition-colors duration-300
       ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}
     >
+      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <h1
           className={`text-3xl font-bold transition-colors duration-300
@@ -65,9 +79,12 @@ export default function App() {
           {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
         </button>
       </div>
+
       <p className={darkMode ? "text-gray-300" : "text-gray-700"}>
         Welcome to your productivity app! Toggle the theme to suit your mood.
       </p>
+
+      {/* Add Task */}
       <div
         className={`mt-8 p-6 w-96 rounded-xl shadow-lg border transition-colors duration-300
     ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
@@ -97,6 +114,8 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      {/* Task List */}
       <div className="mt-8 w-96">
         <ul>
           {tasks.map((task, index) => (
@@ -109,7 +128,7 @@ export default function App() {
               : "bg-gray-100 border border-gray-300 text-gray-900"
           }`}
             >
-              {/* If this task is being edited */}
+              {/* If editing */}
               {editIndex === index ? (
                 <input
                   type="text"
@@ -123,16 +142,19 @@ export default function App() {
               }`}
                 />
               ) : (
-                <span>
+                <span
+                  className={`flex-1 ${
+                    task.done ? "line-through opacity-60" : ""
+                  }`}
+                >
                   <span className="font-bold mr-2">{index + 1}.</span>
-                  {task}
+                  {task.text}
                 </span>
               )}
 
               {/* Buttons */}
               <div className="flex gap-2">
                 {editIndex === index ? (
-                  // Save button
                   <button
                     onClick={() => handleSaveTask(index)}
                     className="px-2 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition"
@@ -140,7 +162,6 @@ export default function App() {
                     Save
                   </button>
                 ) : (
-                  // Edit button
                   <button
                     onClick={() => handleEditTask(index)}
                     className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition"
@@ -149,7 +170,13 @@ export default function App() {
                   </button>
                 )}
 
-                {/* Delete button */}
+                <button
+                  onClick={() => handleToggleDone(index)}
+                  className="px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600 transition"
+                >
+                  {task.done ? "Undo" : "Done"}
+                </button>
+
                 <button
                   onClick={() => handleDeleteTask(index)}
                   className="p-1 rounded hover:bg-red-200 dark:hover:bg-red-600 transition"
