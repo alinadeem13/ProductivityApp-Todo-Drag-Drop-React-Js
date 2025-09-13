@@ -4,6 +4,7 @@ import { createSlice, nanoid } from "@reduxjs/toolkit";
 // Initial state: where tasks live
 const initialState = {
   items: [],
+  filter: "all", // 👈 new: all | active | completed
 };
 
 const tasksSlice = createSlice({
@@ -40,11 +41,16 @@ const tasksSlice = createSlice({
         task.text = text;
       }
     },
+    reorderTasks(state, action) {
+      const { sourceIndex, destinationIndex } = action.payload;
+      const [movedTask] = state.items.splice(sourceIndex, 1);
+      state.items.splice(destinationIndex, 0, movedTask);
+    },
   },
 });
 
 // Export actions for components to dispatch
-export const { addTask, toggleTask, deleteTask, updateTask } =
+export const { addTask, toggleTask, deleteTask, updateTask, reorderTasks } =
   tasksSlice.actions;
 
 // Export reducer for store.js

@@ -6,7 +6,9 @@ import {
   toggleTask,
   deleteTask,
   updateTask,
+  reorderTasks,
 } from "../features/tasks/taskSlice";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const Home = () => {
   const [darkMode, setDarkMode] = useDarkMode();
@@ -14,7 +16,7 @@ const Home = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  const tasks = useSelector((state) => state.tasks.items);
+  const { items } = useSelector((state) => state.tasks);
   const dispatch = useDispatch();
 
   // Add new task
@@ -31,22 +33,33 @@ const Home = () => {
     }
   };
 
+  // Reorder tasks
+  const handleDragEnd = (result) => {
+    if (!result.destination) return; // dropped outside the list
+    dispatch(
+      reorderTasks({
+        sourceIndex: result.source.index,
+        destinationIndex: result.destination.index,
+      })
+    );
+  };
+
   // Delete task
   const handleDeleteTask = (index) => {
-    dispatch(deleteTask(tasks[index].id));
+    dispatch(deleteTask(items[index].id));
     alert("Task Deleted");
   };
 
   // Edit task
   const handleEditTask = (index) => {
     setEditIndex(index);
-    setEditValue(tasks[index].text);
+    setEditValue(items[index].text);
   };
 
   // Save edited task
   const handleSaveTask = (index) => {
     if (editValue.trim() !== "") {
-      dispatch(updateTask({ id: tasks[index].id, text: editValue }));
+      dispatch(updateTask({ id: items[index].id, text: editValue }));
     }
     setEditIndex(null);
     setEditValue("");
@@ -54,10 +67,8 @@ const Home = () => {
 
   // Toggle done/undo
   const handleToggleDone = (index) => {
-    dispatch(toggleTask(tasks[index].id));
+    dispatch(toggleTask(items[index].id));
   };
-
-  console.log("ITEEMSS", tasks);
 
   return (
     <div
@@ -125,76 +136,93 @@ const Home = () => {
 
       {/* Task List */}
       <div className="mt-8 w-96">
-        <ul>
-          {tasks.map((task, index) => (
-            <li
-              key={task.id}
-              className={`flex justify-between items-center mt-4 p-3 rounded-lg shadow transition-colors duration-300
-              ${
-                darkMode
-                  ? "bg-gray-700 border border-gray-600 text-white"
-                  : "bg-gray-100 border border-gray-300 text-gray-900"
-              }`}
-            >
-              {/* If editing */}
-              {editIndex === index ? (
-                <input
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  className={`flex-1 px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${
-                    darkMode
-                      ? "bg-gray-600 text-white border-gray-500"
-                      : "bg-white text-gray-900 border-gray-300"
-                  }`}
-                />
-              ) : (
-                <span
-                  className={`flex-1 ${
-                    task.completed ? "line-through opacity-60" : ""
-                  }`}
-                >
-                  <span className="font-bold mr-2">{index + 1}.</span>
-                  {task.text}
-                </span>
-              )}
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="tasks">
+            {(provided) => (
+              <ul
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-2"
+              >
+                {items.map((task, index) => (
+                  <Draggable key={task.id} draggableId={task.id} index={index}>
+                    {(provided) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className={`flex justify-between items-center p-3 rounded-lg shadow transition-colors duration-300
+                        ${
+                          darkMode
+                            ? "bg-gray-700 border border-gray-600 text-white"
+                            : "bg-gray-100 border border-gray-300 text-gray-900"
+                        }`}
+                      >
+                        {/* If editing */}
+                        {editIndex === index ? (
+                          <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className={`flex-1 px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500
+                            ${
+                              darkMode
+                                ? "bg-gray-600 text-white border-gray-500"
+                                : "bg-white text-gray-900 border-gray-300"
+                            }`}
+                          />
+                        ) : (
+                          <span
+                            className={`flex-1 ${
+                              task.completed ? "line-through opacity-60" : ""
+                            }`}
+                          >
+                            <span className="font-bold mr-2">{index + 1}.</span>
+                            {task.text}
+                          </span>
+                        )}
 
-              {/* Buttons */}
-              <div className="flex gap-2">
-                {editIndex === index ? (
-                  <button
-                    onClick={() => handleSaveTask(index)}
-                    className="px-2 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition"
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleEditTask(index)}
-                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                  >
-                    ✏️
-                  </button>
-                )}
+                        {/* Buttons */}
+                        <div className="flex gap-2">
+                          {editIndex === index ? (
+                            <button
+                              onClick={() => handleSaveTask(index)}
+                              className="px-2 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition"
+                            >
+                              Save
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleEditTask(index)}
+                              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                            >
+                              ✏️
+                            </button>
+                          )}
 
-                <button
-                  onClick={() => handleToggleDone(index)}
-                  className="px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600 transition"
-                >
-                  {task.completed ? "Undo" : "Done"}
-                </button>
+                          <button
+                            onClick={() => handleToggleDone(index)}
+                            className="px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600 transition"
+                          >
+                            {task.completed ? "Undo" : "Done"}
+                          </button>
 
-                <button
-                  onClick={() => handleDeleteTask(index)}
-                  className="p-1 rounded hover:bg-red-200 dark:hover:bg-red-600 transition"
-                >
-                  🗑️
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                          <button
+                            onClick={() => handleDeleteTask(index)}
+                            className="p-1 rounded hover:bg-red-200 dark:hover:bg-red-600 transition"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
     </div>
   );
