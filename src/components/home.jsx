@@ -9,6 +9,7 @@ import {
   reorderTasks,
 } from "../features/tasks/taskSlice";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { toast } from "react-toastify";
 
 const Home = () => {
   const [darkMode, setDarkMode] = useDarkMode();
@@ -19,23 +20,21 @@ const Home = () => {
   const { items } = useSelector((state) => state.tasks);
   const dispatch = useDispatch();
 
-  // Add new task
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
 
     if (!isNaN(newTask)) {
-      alert("Please enter a valid task.");
+      toast.error("Please enter a valid task.");
       setNewTask("");
     } else {
-      alert(`Task Added: ${newTask}`);
+      toast.success(`Task Added: ${newTask}`);
       dispatch(addTask(newTask));
       setNewTask("");
     }
   };
 
-  // Reorder tasks
   const handleDragEnd = (result) => {
-    if (!result.destination) return; // dropped outside the list
+    if (!result.destination) return;
     dispatch(
       reorderTasks({
         sourceIndex: result.source.index,
@@ -44,19 +43,16 @@ const Home = () => {
     );
   };
 
-  // Delete task
   const handleDeleteTask = (index) => {
     dispatch(deleteTask(items[index].id));
-    alert("Task Deleted");
+    toast.success("Task Deleted");
   };
 
-  // Edit task
   const handleEditTask = (index) => {
     setEditIndex(index);
     setEditValue(items[index].text);
   };
 
-  // Save edited task
   const handleSaveTask = (index) => {
     if (editValue.trim() !== "") {
       dispatch(updateTask({ id: items[index].id, text: editValue }));
@@ -65,20 +61,19 @@ const Home = () => {
     setEditValue("");
   };
 
-  // Toggle done/undo
   const handleToggleDone = (index) => {
     dispatch(toggleTask(items[index].id));
   };
 
   return (
     <div
-      className={`flex flex-col items-center justify-center min-h-screen transition-colors duration-300
+      className={`flex flex-col items-center justify-start min-h-screen py-8 px-4 sm:px-6 md:px-8 transition-colors duration-300
       ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-xl gap-4 mb-6">
         <h1
-          className={`text-3xl font-bold transition-colors duration-300
+          className={`text-2xl sm:text-3xl font-bold transition-colors duration-300
           ${darkMode ? "text-blue-400" : "text-blue-600"}`}
         >
           🚀 Productivity App
@@ -97,28 +92,26 @@ const Home = () => {
         </button>
       </div>
 
-      <p className={darkMode ? "text-gray-300" : "text-gray-700"}>
+      <p className="text-center sm:text-left mb-6">
+        {darkMode ? "text-gray-300" : "text-gray-700"}
         Welcome to your productivity app! Toggle the theme to suit your mood.
       </p>
 
       {/* Add Task */}
       <div
-        className={`mt-8 p-6 w-96 rounded-xl shadow-lg border transition-colors duration-300
+        className={`w-full max-w-xl mt-4 p-4 sm:p-6 rounded-xl shadow-lg border transition-colors duration-300
         ${
           darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"
         }`}
       >
-        <div className="flex items-center">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddTask();
-            }}
+            onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
             placeholder="Enter a new task..."
-            className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 
-            transition-colors duration-300
+            className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300
             ${
               darkMode
                 ? "bg-gray-700 text-white border-gray-600"
@@ -126,7 +119,7 @@ const Home = () => {
             }`}
           />
           <button
-            className="ml-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300"
+            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300"
             onClick={handleAddTask}
           >
             Add Task
@@ -135,7 +128,7 @@ const Home = () => {
       </div>
 
       {/* Task List */}
-      <div className="mt-8 w-96">
+      <div className="w-full max-w-xl mt-6">
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="tasks">
             {(provided) => (
@@ -151,20 +144,20 @@ const Home = () => {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        className={`flex justify-between items-center p-3 rounded-lg shadow transition-colors duration-300
+                        className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow transition-colors duration-300
                         ${
                           darkMode
                             ? "bg-gray-700 border border-gray-600 text-white"
                             : "bg-gray-100 border border-gray-300 text-gray-900"
                         }`}
                       >
-                        {/* If editing */}
+                        {/* Task Text */}
                         {editIndex === index ? (
                           <input
                             type="text"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className={`flex-1 px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500
+                            className={`flex-1 px-2 py-1 mb-2 sm:mb-0 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500
                             ${
                               darkMode
                                 ? "bg-gray-600 text-white border-gray-500"
@@ -173,7 +166,7 @@ const Home = () => {
                           />
                         ) : (
                           <span
-                            className={`flex-1 ${
+                            className={`flex-1 break-words ${
                               task.completed ? "line-through opacity-60" : ""
                             }`}
                           >
@@ -183,7 +176,7 @@ const Home = () => {
                         )}
 
                         {/* Buttons */}
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
                           {editIndex === index ? (
                             <button
                               onClick={() => handleSaveTask(index)}
@@ -199,14 +192,12 @@ const Home = () => {
                               ✏️
                             </button>
                           )}
-
                           <button
                             onClick={() => handleToggleDone(index)}
                             className="px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600 transition"
                           >
                             {task.completed ? "Undo" : "Done"}
                           </button>
-
                           <button
                             onClick={() => handleDeleteTask(index)}
                             className="p-1 rounded hover:bg-red-200 dark:hover:bg-red-600 transition"
